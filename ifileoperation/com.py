@@ -1,6 +1,5 @@
 """Exposes lower-level COM related methods."""
 __all__ = [
-    'FileAttributeFlags',
     'create_IFileOperation',
     'parse_filename',
     'WIN32_FIND_DATAW',
@@ -15,7 +14,6 @@ from typing import Callable, ParamSpec, TypeAlias, TypeVar, cast
 # pywin32
 import pythoncom
 import pywintypes
-import win32api
 
 # comtypes
 from comtypes import COMMETHOD, GUID, HRESULT, COMObject, IUnknown
@@ -46,7 +44,9 @@ def parse_filename(path: StrPath, force: bool = False):
     """
     path = fspath(path)
     try:
-        return shell.SHCreateItemFromParsingName(path, None, shell.IID_IShellItem2)  # type: ignore
+        return shell.SHCreateItemFromParsingName(
+            path, None, shell.IID_IShellItem2  # type: ignore
+        )
     except pywintypes.com_error as e:
         if e.hresult == E_FILE_NOT_FOUND and force:  # type: ignore
             return shell.SHCreateItemFromParsingName(
@@ -92,7 +92,8 @@ class FileSysBindData(COMObject):
         return S_OK
 
     def GetFindData(self, ppfd) -> int:
-        ppfd = self.find_data
+        ppfd.contents = self.find_data
+        # ppfd = self.find_data
         return S_OK
 
 
@@ -111,6 +112,11 @@ def create_bind_ctx(find_data: WIN32_FIND_DATAW):
 
 
 def convert_exceptions(callable: Callable[P, T]) -> Callable[P, T]:
+    """Wraps a method to automatically convert pythoncom.com_error exceptions
+    into FileOperatorError exceptions.
+    """
+    # TODO: Implement mapping to builtin Python exceptions for common
+    # HRESULTs, e.g. E_ACCESSDENIED, E_OUTOFMEMORY, etc.
     @wraps(callable)
     def wrapped(*args: P.args, **kwargs: P.kwargs) -> T:
         try:
@@ -119,5 +125,6 @@ def convert_exceptions(callable: Callable[P, T]) -> Callable[P, T]:
             raise FileOperatorError(*e.args) from None
 
     return wrapped
+
 
 FOLDER_BIND_CTX = create_bind_ctx(WIN32_FIND_DATAW(DWORD(FileAttributeFlags.DIRECTORY)))

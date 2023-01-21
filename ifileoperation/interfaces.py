@@ -22,7 +22,6 @@ if TYPE_CHECKING:
         def Release(self) -> int:
             ...
 
-    # Use typing hyjinks to extract the types from pywin32 typeshed
     TIShellItem = TypeVar('TIShellItem')
 
     class _IFileOperation(Generic[TIShellItem], IUknown):
@@ -109,12 +108,16 @@ if TYPE_CHECKING:
         def Unadvise(self, dwCookie: int) -> int:
             ...
 
-    def _ifile_operation(
+    def _make(
         callable: Callable[..., TIShellItem]
     ) -> type[_IFileOperation[TIShellItem]]:
+        """Uses typing hijinks to extract the return type of a callable to apply to the
+        IFileOperation interface.  This way typeshed hint types can be extracted and
+        used as a hint for the member method parameters.
+        """
         return _IFileOperation[TIShellItem]
 
-    IFileOperation: TypeAlias = _ifile_operation(shell.SHCreateItemFromParsingName)  # type: ignore
+    IFileOperation: TypeAlias = _make(shell.SHCreateItemFromParsingName)  # type: ignore
 
 
 else:

@@ -25,7 +25,7 @@ build-backend = 'setuptools.build_meta'
 package-dir = {"ifileoperation" = "ifileoperation"}
 
 [project]
-name = 'ifileoperaion'
+name = 'ifileoperation'
 version = '1.0.0'
 authors = [
     { name = 'lojack5' },
@@ -33,15 +33,18 @@ authors = [
 description = "Python wrapper for using Win32's IFileOperation for manipulating the filesystem."
 readme = 'README.md'
 license = { text = 'BSD 3-Clause' }
-requires-python = '>=3.0'
+requires-python = '>=3.11'
 dependencies = [
-    'typing_extensions~=4.4.0; python_version < "3.11"',
+    'comtypes>=1.1.14',
+    'pywin32>=305',
 ]
 classifiers = [
     'Intended Audience :: Developers',
     'Programming Language :: Python :: 3 :: Only',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: Implementation :: CPython',
     'License :: OSI Approved :: BSD License',
-    'Operating System :: OS Independent',
+    'Operating System :: Microsoft :: Windows',
     'Typing :: Typed',
 ]
 
