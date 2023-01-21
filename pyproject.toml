@@ -1,0 +1,65 @@
+[tool.coverage.run]
+branch = true
+source = ['ifileoperation']
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    'pragma: no cover',
+    'raise NotImplementedError',
+    'if (typing.)?TYPE_CHECKING:',
+    'if __name__ == .__main__.:',
+    '\.\.\.',
+]
+
+[tool.pytest.ini_options]
+testpaths = ['tests']
+addopts = "--cov --cov-report term --cov-report=html --cov-report=xml"
+
+[build-system]
+requires = ['setuptools>=61.0']
+build-backend = 'setuptools.build_meta'
+
+[tool.setuptools]
+package-dir = {"ifileoperation" = "ifileoperation"}
+
+[project]
+name = 'ifileoperaion'
+version = '1.0.0'
+authors = [
+    { name = 'lojack5' },
+]
+description = "Python wrapper for using Win32's IFileOperation for manipulating the filesystem."
+readme = 'README.md'
+license = { text = 'BSD 3-Clause' }
+requires-python = '>=3.0'
+dependencies = [
+    'typing_extensions~=4.4.0; python_version < "3.11"',
+]
+classifiers = [
+    'Intended Audience :: Developers',
+    'Programming Language :: Python :: 3 :: Only',
+    'License :: OSI Approved :: BSD License',
+    'Operating System :: OS Independent',
+    'Typing :: Typed',
+]
+
+[project.urls]
+'Homepage' = 'https://github.com/lojack5/IFileOperation'
+'Bug Tracker' = 'https://github.com/lojack5/IFileOperation/issues'
+
+[tool.black]
+skip-string-normalization = true
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ['E203']
+per-file-ignores = [
+    # F401: Imported but unused
+    # F403: Star import used
+    '__init__.py: F403, F401',
+]
+
+[tool.isort]
+profile = 'black'
