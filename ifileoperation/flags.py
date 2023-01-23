@@ -1,9 +1,10 @@
 __all__ = [
     'FileAttributeFlags',
     'FileOperationFlags',
+    'TransferSourceFlags',
 ]
 
-from enum import IntFlag
+from enum import Flag, IntEnum, IntFlag
 
 
 class FileAttributeFlags(IntFlag):
@@ -214,3 +215,64 @@ class FileOperationFlags(IntFlag):
     DONTDISPLAYLOCATIONS = 0x80000000
     """Introduced in Windows 7. Do not display the location line in the progress dialog.
     """
+
+
+class TransferSourceFlags(Flag):
+    """Flags recieved in a Pre/Post-Move/Copy, etc event in IFileOperationProgressSink.
+    https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/ne-shobjidl_core-_transfer_source_flags
+    """
+
+    # Just a Flag, not IntFlag, since we don't pass it *into* any win32 API calls.
+
+    NORMAL = 0x0
+    FAIL_EXIST = 0x0
+    """Fail if the destination already exists, unless OVERWRITE_EXIST is specified. This
+    is a default behavior."""
+
+    RENAME_EXIST = 0x1
+    """Rename with auto-name generation if the destination already exists."""
+
+    OVERWRITE_EXIST = 0x2
+    """Overwrite or merge with the destination."""
+
+    ALLOW_DECRYPTION = 0x4
+    """Allow creation of a decrypted destination."""
+
+    NO_SECURITY = 0x8
+    """No discretionary access control list (DACL), system access control list (SACL),
+    or owner."""
+
+    COPY_CREATION_TIME = 0x10
+    """Copy the creation time as part of the copy. This can be useful for a move
+    operation that is being used as a copy and delete operation
+    (MOVE_AS_COPY_DELETE)."""
+
+    COPY_WRITE_TIME = 0x20
+    """Copy the last write time as part of the copy."""
+
+    USE_FULL_ACCESS = 0x40
+    """Assign write, read, and delete permissions as share mode."""
+
+    DELETE_RECYCLE_IF_POSSIBLE = 0x80
+    """Recycle on file delete, if possible."""
+
+    COPY_HARD_LINK = 0x100
+    """Hard link to the desired source (not required). This avoids a normal copy
+    operation."""
+
+    COPY_LOCALIZED_NAME = 0x200
+    """Copy the localized name."""
+
+    MOVE_AS_COPY_DELETE = 0x400
+    """Move as a copy and delete operation."""
+
+    TSF_SUSPEND_SHELLEVENTS = 0x800
+    """Suspend Shell events."""
+
+
+class FileOperationResult(IntEnum):
+    # NOTE: I haven't been able to find this in the MSDocs anwhere. The closest I've
+    # found is in pywin32 this is defined as COPYENGINE_S_DONT_PROCESS_CHILDREN, which
+    # doesn't make sense as a return code from the operations it's coming from. But,
+    # it's the result I'm getting for successful file operations.
+    SUCCESS = 0x270008

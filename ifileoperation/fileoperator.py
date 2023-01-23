@@ -6,20 +6,113 @@ from os import PathLike, fspath
 from pathlib import Path
 from typing import Iterable, TypeAlias
 
-from .com import convert_exceptions, create_IFileOperation, parse_filename
+from .com import (
+    FileOperation,
+    FileOperationProgressSink,
+    convert_exceptions,
+    parse_filename,
+)
 from .errors import IFileOperationError
-from .flags import FileOperationFlags
+from .flags import FileOperationFlags, FileOperationResult, TransferSourceFlags
 
 StrPath: TypeAlias = str | PathLike[str]
+
+
+class ProgressSink(FileOperationProgressSink):
+    """ProgressSink that logs successful operations."""
+
+    def __init__(self):
+        self.name_map = {}
+
+    def finish_operations(self, result: int) -> None:
+        self.result_code = result
+
+    def post_copy_item(
+        self,
+        transfer_flags: TransferSourceFlags,
+        source: str,
+        destination: str,
+        new_name: str | None,
+        result: int,
+    ) -> None:
+        if new_name:
+            self.name_map[source] = new_name
+
+    def post_delete_item(
+        self,
+        transfer_flags: TransferSourceFlags,
+        source: str,
+        result: int,
+        recycled: bool,
+    ) -> None:
+        if result == FileOperationResult.SUCCESS:
+            if recycled:
+                self.name_map[source] = 'RECYCLE_BIN'
+            else:
+                self.name_map[source] = 'DELETED'
+
+    def post_move_item(
+        self,
+        transfer_flags: TransferSourceFlags,
+        source: str,
+        destination: str,
+        new_name: str | None,
+        result: int,
+    ) -> None:
+        if new_name:
+            self.name_map[source] = new_name
+
+    def post_rename_item(
+        self,
+        transfer_flags: TransferSourceFlags,
+        source: str,
+        new_name: str | None,
+        result: int,
+    ) -> None:
+        if new_name:
+            self.name_map[source] = new_name
 
 
 class FileOperator:
     """A context manager for performing file operations.  Not reentrant."""
 
+    DEFAULT_FLAGS = None
+    """Default file operation behavior. File operations behave just as if the user had
+    performed them in Windows Explorer with no modifiers (eg: Shift, Ctrl, etc).
+    """
+
+    UNDO_FLAGS = (
+        FileOperationFlags.ADDUNDORECORD
+        | FileOperationFlags.ALLOW_UNDO
+        | FileOperationFlags.RECYCLEONDELETE
+    )
+    """Standard flags to allow operations to be undone with Ctrl + Z."""
+
+    SEMI_SILENT_FLAGS = (
+        FileOperationFlags.WANTNUKEWARNING
+        | FileOperationFlags.SILENT
+        | FileOperationFlags.NO_CONFIRM_MKDIR
+    )
+    """Flags to suppress progress dialogs, but still show dialogs for name collisions
+    and temporary errors (eg: due to a file open in another program), allowing the user
+    to Try Again or Skip.
+    """
+
+    FULL_SILENT_FLAGS = (
+        FileOperationFlags.SILENT
+        | FileOperationFlags.NO_CONFIMATION
+        | FileOperationFlags.NOERRORUI
+        | FileOperationFlags.NO_CONFIRM_MKDIR
+        | FileOperationFlags.SHOWELEVATIONPROMPT
+    )
+    """Flags to suppress all dialogs (as if Yes to All was selected), except for a UAC
+    prompt if necessary.
+    """
+
     def __init__(
         self,
         parent=None,
-        flags: FileOperationFlags | None = None,
+        flags: FileOperationFlags | None = DEFAULT_FLAGS,
         *,
         commit_on_exit: bool = False,
     ):
@@ -35,7 +128,9 @@ class FileOperator:
         :param commit_on_exit: If True (default: False), `commit` will be performed
             automatically when the with block is exited if no exceptions were raised.
         """
-        self.ifo = create_IFileOperation()
+        self.ifo = FileOperation()
+        self.sink = ProgressSink()
+        self.sink_cookie = self.ifo.Advise(self.sink.com_ptr)
         if parent is not None:
             try:
                 parent = parent.GetHandle()  # wx.Window
@@ -58,6 +153,7 @@ class FileOperator:
     def __exit__(self, exc_type, exc_value, exc_traceback):
         if self.commit_on_exit and not exc_type:
             self.commit()
+            self.ifo.Unadvise(self.sink_cookie)
         # Delete the IFileOperation instance, so reentrance will raise an error
         del self.ifo
 
@@ -173,5 +269,8 @@ class FileOperator:
     @convert_exceptions
     def commit(self):
         """Perform all scheduled file operations."""
-        self.returncode = self.ifo.PerformOperations()
+        self.return_code = self.ifo.PerformOperations()
         self.aborted = self.ifo.GetAnyOperationsAborted()
+        self.results = self.sink.name_map
+        if self.return_code is None:
+            self.return_code = self.sink.result_code

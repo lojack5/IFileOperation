@@ -1,6 +1,5 @@
-"""
-Interfaces for typing.  Partially typed.
-"""
+"""IFileOperation is fully wrapped in pywin32, so this is purely for typehinting."""
+
 __all__ = [
     'IFileOperation',
 ]
@@ -12,7 +11,7 @@ if TYPE_CHECKING:
 
     from win32com.shell import shell  # type: ignore (module *does* exist)
 
-    class IUknown:
+    class IUnknown:
         def AddRef(self) -> int:
             ...
 
@@ -24,8 +23,8 @@ if TYPE_CHECKING:
 
     TIShellItem = TypeVar('TIShellItem')
 
-    class _IFileOperation(Generic[TIShellItem], IUknown):
-        def Advise(self, pfops, pdwCookie) -> int:
+    class _IFileOperation(Generic[TIShellItem], IUnknown):
+        def Advise(self, pfops) -> int:
             ...
 
         def ApplyPropertiesToItem(self, item: TIShellItem) -> int:
@@ -75,8 +74,8 @@ if TYPE_CHECKING:
             destination_folder: TIShellItem,
             file_attributes: int,
             name: str,
-            pszTemplateName,
-            pszDestinationName,
+            pszTemplateName: str,
+            pszDestinationName: str,
             pfopsItem=...,
         ) -> int:
             ...
@@ -118,8 +117,6 @@ if TYPE_CHECKING:
         return _IFileOperation[TIShellItem]
 
     IFileOperation: TypeAlias = _make(shell.SHCreateItemFromParsingName)  # type: ignore
-
-
 else:
     from typing import NewType
 
