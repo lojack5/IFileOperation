@@ -4,7 +4,7 @@ __all__ = [
     'TransferSourceFlags',
 ]
 
-from enum import IntFlag, Flag
+from enum import Flag, IntEnum, IntFlag
 
 
 class FileAttributeFlags(IntFlag):
@@ -221,6 +221,7 @@ class TransferSourceFlags(Flag):
     """Flags recieved in a Pre/Post-Move/Copy, etc event in IFileOperationProgressSink.
     https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/ne-shobjidl_core-_transfer_source_flags
     """
+
     # Just a Flag, not IntFlag, since we don't pass it *into* any win32 API calls.
 
     NORMAL = 0x0
@@ -267,3 +268,11 @@ class TransferSourceFlags(Flag):
 
     TSF_SUSPEND_SHELLEVENTS = 0x800
     """Suspend Shell events."""
+
+
+class FileOperationResult(IntEnum):
+    # NOTE: I haven't been able to find this in the MSDocs anwhere. The closest I've
+    # found is in pywin32 this is defined as COPYENGINE_S_DONT_PROCESS_CHILDREN, which
+    # doesn't make sense as a return code from the operations it's coming from. But,
+    # it's the result I'm getting for successful file operations.
+    SUCCESS = 0x270008

@@ -6,7 +6,6 @@ __all__ = [
 
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from typing import Callable, Generic, TypeAlias, TypeVar
 

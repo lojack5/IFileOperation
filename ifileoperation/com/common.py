@@ -3,17 +3,16 @@ __all__ = [
     'com_ptr',
 ]
 
+from ctypes import POINTER, PyDLL, byref, c_bool, c_void_p, py_object
 from functools import wraps
-from ctypes import PyDLL, py_object, c_void_p, c_bool, POINTER, byref
 from typing import Callable, ParamSpec, TypeVar
 
 import pythoncom
-
-from comtypes import IUnknown, COMObject
+from comtypes import COMObject, IUnknown
 
 from ..errors import FileOperatorError
 
-PIUnknown = POINTER(IUnknown)   # type: ignore
+PIUnknown = POINTER(IUnknown)  # type: ignore
 P = ParamSpec('P')
 T = TypeVar('T')
 

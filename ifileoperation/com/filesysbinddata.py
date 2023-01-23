@@ -2,21 +2,20 @@ __all__ = [
     'FOLDER_BIND_CTX',
     'parse_filename',
 ]
-from os import fspath, PathLike
-from typing import TypeAlias
 from ctypes import byref
-from ctypes.wintypes import WIN32_FIND_DATAW, DWORD
+from ctypes.wintypes import DWORD, WIN32_FIND_DATAW
+from os import PathLike, fspath
+from typing import TypeAlias
 
 import pythoncom
 import pywintypes
-from win32com.shell import shell # type: ignore (module *does* exist)
-
 from comtypes import COMObject
 from comtypes.hresult import S_OK
+from win32com.shell import shell  # type: ignore (module *does* exist)
 
-from .interfaces import IFileSysBindData
-from .common import com_ptr
 from ..flags import FileAttributeFlags
+from .common import com_ptr
+from .interfaces import IFileSysBindData
 
 StrPath: TypeAlias = str | PathLike[str]
 
