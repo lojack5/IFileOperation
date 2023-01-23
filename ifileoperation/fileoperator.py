@@ -6,11 +6,36 @@ from os import PathLike, fspath
 from pathlib import Path
 from typing import Iterable, TypeAlias
 
-from .com import convert_exceptions, create_IFileOperation, parse_filename
+from .com import convert_exceptions, create_IFileOperation, parse_filename, FileOperationProgressSink
 from .errors import IFileOperationError
-from .flags import FileOperationFlags
+from .flags import FileOperationFlags, TransferSourceFlags
 
 StrPath: TypeAlias = str | PathLike[str]
+
+
+class ProgressSink(FileOperationProgressSink):
+    def __init__(self):
+        self.name_map = {}
+
+    def post_copy_item(self, transfer_flags: TransferSourceFlags, source: str, destination: str, new_name: str, hr_copy) -> None:
+        if hr_copy == 0:
+            self.name_map[source] = Path(destination) / new_name
+
+    def post_delete_item(self, transfer_flags: TransferSourceFlags, source: str, hr_delete: int, recycled: bool) -> None:
+        if hr_delete == 0:
+            if recycled:
+                self.name_map[source] = 'RECYCLE_BIN'
+            else:
+                self.name_map[source] = 'DELETED'
+
+    def post_move_item(self, transfer_flags: TransferSourceFlags, source: str, destination: str, new_name: str, hr_move) -> None:
+        if hr_move == 0:
+            self.name_map[source] = Path(destination) / new_name
+
+    def post_rename_item(self, transfer_flags: TransferSourceFlags, source: str, new_name: str, hr_rename: int) -> None:
+        print('post_rename_item:', transfer_flags, source, new_name, hex(hr_rename))
+        if hr_rename == 0:
+            self.name_map[source] = Path(source).parent / new_name
 
 
 class FileOperator:
@@ -36,6 +61,8 @@ class FileOperator:
             automatically when the with block is exited if no exceptions were raised.
         """
         self.ifo = create_IFileOperation()
+        self.sink = ProgressSink()
+        self.sink_cookie = self.ifo.Advise(self.sink.to_pywin32())
         if parent is not None:
             try:
                 parent = parent.GetHandle()  # wx.Window
@@ -175,3 +202,5 @@ class FileOperator:
         """Perform all scheduled file operations."""
         self.returncode = self.ifo.PerformOperations()
         self.aborted = self.ifo.GetAnyOperationsAborted()
+        self.results = self.sink.name_map
+        self.ifo.Unadvise(self.sink_cookie)

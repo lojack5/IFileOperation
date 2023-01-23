@@ -3,6 +3,7 @@ Interfaces for typing.  Partially typed.
 """
 __all__ = [
     'IFileOperation',
+    'IShellItem',
 ]
 
 from typing import TYPE_CHECKING
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
     TIShellItem = TypeVar('TIShellItem')
 
     class _IFileOperation(Generic[TIShellItem], IUknown):
-        def Advise(self, pfops, pdwCookie) -> int:
+        def Advise(self, pfops) -> int:
             ...
 
         def ApplyPropertiesToItem(self, item: TIShellItem) -> int:
@@ -118,8 +119,6 @@ if TYPE_CHECKING:
         return _IFileOperation[TIShellItem]
 
     IFileOperation: TypeAlias = _make(shell.SHCreateItemFromParsingName)  # type: ignore
-
-
 else:
     from typing import NewType
 
