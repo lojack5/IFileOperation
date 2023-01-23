@@ -6,7 +6,7 @@ from os import PathLike, fspath
 from pathlib import Path
 from typing import Iterable, TypeAlias
 
-from .com import convert_exceptions, create_IFileOperation, parse_filename, FileOperationProgressSink
+from .com import convert_exceptions, FileOperation, parse_filename, FileOperationProgressSink
 from .errors import IFileOperationError
 from .flags import FileOperationFlags, TransferSourceFlags
 
@@ -60,9 +60,9 @@ class FileOperator:
         :param commit_on_exit: If True (default: False), `commit` will be performed
             automatically when the with block is exited if no exceptions were raised.
         """
-        self.ifo = create_IFileOperation()
+        self.ifo = FileOperation()
         self.sink = ProgressSink()
-        self.sink_cookie = self.ifo.Advise(self.sink.to_pywin32())
+        self.sink_cookie = self.ifo.Advise(self.sink.com_ptr)
         if parent is not None:
             try:
                 parent = parent.GetHandle()  # wx.Window
