@@ -24,9 +24,12 @@ build-backend = 'setuptools.build_meta'
 [tool.setuptools]
 package-dir = {"ifileoperation" = "ifileoperation"}
 
+[tool.setuptools.dynamic]
+version = {attr = 'ifileoperation.__version__'}
+
 [project]
 name = 'ifileoperation'
-version = '1.0.0'
+dynamic = ['version']
 authors = [
     { name = 'lojack5' },
 ]

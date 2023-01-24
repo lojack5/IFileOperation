@@ -24,8 +24,8 @@ specific.
 ## Installation:
 `pip install ifileoperation`
 
-At the moment the library is tested to run on Python 3.11, but other version may
-work if `pywin32` and `comtypes` are available.
+At the moment the library is tested to run on Python 3.11, but other version might work if `pywin32`
+ and `comtypes` are available.
 
 
 ## Usage
@@ -78,7 +78,7 @@ exited, you should create a new instance to perform more operations.
 ### Configuring:
 Configuration is done via the constructor:
 ```python
-__init__(self, parent=None, flags=None, commit_on_exit=False):
+__init__(self, parent=None, flags=FileOperator.DEFAULT_FLAGS, commit_on_exit=False):
 ```
 - `parent`: A optional `HANDLE` to the parent that should own any dialog boxes
   shown. You may also pass a `wx.Window` object, and `FileOperator` will extract
@@ -87,7 +87,22 @@ __init__(self, parent=None, flags=None, commit_on_exit=False):
   performing the operations.  See the Microsoft documentation on [these flags](
   https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ifileoperation-setoperationflags)
   for more details on what each means.  These are also in the docstrings for
-  `FileOperationFlags`, so you can read there them as well.
+  `FileOperationFlags`, so you can read there them as well.  Some common defaults are
+  provided as well:
+  - `FileOperator.DEFAULT_FLAGS`: This causes behavior as if the user had initiated the
+    file operations from within Windows Exlorer with no modifier keys pressed (Shift,
+    Ctrl, etc).
+  - `FileOperator.UNDO_FLAGS`: This sets the flags needed to allow your operation to be
+    undone with `Ctrl+Z`.
+  - `FileOperator.SEMI_SILENT_FLAGS`: This hides the progress dialog, and only shows
+    dialogs if user intervention is required. For example, if a name collision occurs, or
+    when attempting to move a file that cannot be (temporarily) due to being open in
+    another program, or if a file must be deleted instead of recycled.
+  - `FileOperator.FULL_SILENT_FLAGS`: This performs the operations fully silently, responding
+    to any prompts as if "Yes to All" or "Continue" was selected.  Note this does *not*
+    resolve other errors, and will fail if any error occurs.  The only prompt that may be shown
+    is a UAC prompt if elevation is required.  You can further suppress the UAC prompt with
+    `FileOperationFlags.REQUIREELEVATION`.
 - `commit_on_exit`: If set to `True`, all the queued operations will be
   automatically commited as long as no exceptions occurred withing the `with`
   block before exiting.  Exceptions *might* still occur during the committing
@@ -119,19 +134,33 @@ The basic file operations can be scheduled.  In these method signatures,
   into files in different directories.
 - `delete_file(source: StrPath)`: Deletes the target file.
 - `delete_files(sources: Iterable[StrPath])`: Deletes the target files.
-- `commit()`: Cause all the queue operations to be performed.  After a `commit`,
-  the `.aborted` attribute will be set to `True` or `False` depending on if any
-  file operations were Canceled/Aborted.
+- `commit()`: Cause all the queue operations to be performed.
+
+### Post-commit attributes
+After a `commit`, additional attributes are available on the `FileOperator` instance:
+- `return_code`: The `HRESULT` return code from the overall operation. This is usually
+  not required to be inspected.
+- `aborted`: `True` if any of the operations were aborted / skipped.
+- `results`: A mapping of source filenames to destination filenames for successful
+  operations.  In the special case of deleted files, the destination will be `'RECYCLED'`
+  or `'DELETED'` respectively.
 
 ### Exceptions
-All exceptions raised by this library are based on `IFileOperationError`, except
-for any exceptions that are translated into standard library exceptions (at the
-moment, none of them are).  These exceptions are just a simple translation of
-`pythoncom.com_error`, so you don't have to have any knowledge of the [pywin32](
-https://pypi.org/project/pywin32/) library.
-
-I have plans to convert some of the exceptions into standard `OSError`s, for
-example `FileNotFoundError`, `PermimssionError`, etc.
+This library may raise any of the following exceptions:
+  - `NotADirectoryError`: This can happen when trying to rename a folder if a file
+    already exists with the same name.
+  - `IsADirectoryError`: This can happen when trying to rename a file if a folder
+    already exists with the same name.
+  - `PermissionError`: Can occur for various reasons, common examples are UAC
+    elevation being required, or modifying a read-only file.
+  - `FileExistsError`: Can occur when attempting to create a new file, when one
+    of the same name already exists.
+  - `FileNotFoundError`: Happens if the source file for an operation cannot be
+    found.
+  - `ifileoperation.IFileOperationError`: For all other errors that occur. These
+    are a simple wrapper around `pythoncom.com_error`, and expose an `.hresult`
+    attribute with the `HRESULT` that triggered the error.
+In the future, more `HRESULT`s may be converted into standard library `OSError`s.
 
 
 ## Contributing

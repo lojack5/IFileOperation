@@ -69,6 +69,9 @@ class ProgressSink(FileOperationProgressSink):
         new_name: str | None,
         result: int,
     ) -> None:
+        import struct
+
+        result = struct.unpack('I', struct.pack('i', result))[0]
         if new_name:
             self.name_map[source] = new_name
 
@@ -102,11 +105,12 @@ class FileOperator:
         FileOperationFlags.SILENT
         | FileOperationFlags.NO_CONFIMATION
         | FileOperationFlags.NOERRORUI
+        | FileOperationFlags.EARLYFAILURE
         | FileOperationFlags.NO_CONFIRM_MKDIR
         | FileOperationFlags.SHOWELEVATIONPROMPT
     )
     """Flags to suppress all dialogs (as if Yes to All was selected), except for a UAC
-    prompt if necessary.
+    prompt if necessary.  If errors occur, the operation will fail immediately.
     """
 
     def __init__(
