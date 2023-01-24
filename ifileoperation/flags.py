@@ -276,3 +276,25 @@ class FileOperationResult(IntEnum):
     # doesn't make sense as a return code from the operations it's coming from. But,
     # it's the result I'm getting for successful file operations.
     SUCCESS = 0x270008
+    """A successful move/copy/rename/delete operation."""
+
+    E_DESTINATION_IS_FILE = 0x8027000B
+    """A move/copy/rename tried to operate on a folder, but the target already exists as
+    a file.
+    """
+
+    E_DESTINATION_IS_FOLDER = 0x8027000C
+    """A move/copy/rename tried to operate on a file, but the target already exists as a
+    folder.
+    """
+
+    E_REQUIRES_ELEVATION = 0x80270002
+    E_ACCESS_DENIED_SOURCE = 0x80270021
+    E_ACCESS_DENIED_DESTINATION = 0x80270022
+    """The user requires elevated permissions to perform the operation."""
+
+    E_ALREADY_EXISTS_NORMAL = 0x80270029
+    E_ALREADY_EXISTS_READONLY = 0x8027002A
+    E_ALREADY_EXISTS_SYSTEM = 0x8027002B
+    E_ALREADY_EXISTS_FOLDER = 0x8027002C
+    """The file already exists."""

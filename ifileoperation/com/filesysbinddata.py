@@ -60,9 +60,12 @@ def parse_filename(path: StrPath, force: bool = False):
             path, None, shell.IID_IShellItem2  # type: ignore
         )
     except pywintypes.com_error as e:
-        if e.hresult == E_FILE_NOT_FOUND and force:  # type: ignore
-            return shell.SHCreateItemFromParsingName(
-                path, FOLDER_BIND_CTX, shell.IID_IShellItem2
-            )
+        if e.hresult == E_FILE_NOT_FOUND:  # type: ignore
+            if force:
+                return shell.SHCreateItemFromParsingName(
+                    path, FOLDER_BIND_CTX, shell.IID_IShellItem2
+                )
+            else:
+                raise FileNotFoundError(path) from None
         else:
             raise
