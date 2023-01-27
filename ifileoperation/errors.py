@@ -1,6 +1,7 @@
 __all__ = [
     'IFileOperationError',
     'FileOperatorError',
+    'UserCancelledError',
 ]
 
 import struct
@@ -25,3 +26,8 @@ class FileOperatorError(IFileOperationError):
         else:
             msg = f'{hex(hresult)}: {msg}'
         super().__init__(msg)
+
+
+class UserCancelledError(IFileOperationError):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__('User cancelled the operation')
