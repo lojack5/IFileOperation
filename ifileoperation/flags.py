@@ -298,3 +298,9 @@ class FileOperationResult(IntEnum):
     E_ALREADY_EXISTS_SYSTEM = 0x8027002B
     E_ALREADY_EXISTS_FOLDER = 0x8027002C
     """The file already exists."""
+
+    E_USER_CANCELLED = 0x80270000
+    """User cancelled the operation."""
+
+    E_DRIVE_NOT_FOUND = 0x8027000F  # COPYENGINE_E_DEST_IS_RO_CD
+    """The destination is a read-only CD, or the drive was not found."""
