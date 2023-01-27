@@ -148,7 +148,8 @@ After a `commit`, additional attributes are available on the `FileOperator` inst
 ### Exceptions
 This library may raise any of the following exceptions:
   - `NotADirectoryError`: This can happen when trying to rename a folder if a file
-    already exists with the same name.
+    already exists with the same name, or attempting to move/copy to a directory
+    that doesn't exist.
   - `IsADirectoryError`: This can happen when trying to rename a file if a folder
     already exists with the same name.
   - `PermissionError`: Can occur for various reasons, common examples are UAC

@@ -11,7 +11,7 @@ from typing import Callable, ParamSpec, TypeVar
 import pythoncom
 from comtypes import COMObject, IUnknown
 
-from ..errors import FileOperatorError, UserCancelledError
+from ..errors import FileOperatorError, IFO_NotADirectoryError, UserCancelledError
 from ..flags import FileOperationResult
 
 PIUnknown = POINTER(IUnknown)  # type: ignore
@@ -30,7 +30,7 @@ def com_ptr(com_object: COMObject):
 
 _hresult_to_exception = {
     FileOperationResult.E_DESTINATION_IS_FILE: NotADirectoryError,
-    FileOperationResult.E_DRIVE_NOT_FOUND: NotADirectoryError,
+    FileOperationResult.E_DRIVE_NOT_FOUND: IFO_NotADirectoryError,
     FileOperationResult.E_DESTINATION_IS_FOLDER: IsADirectoryError,
     FileOperationResult.E_ACCESS_DENIED_DESTINATION: PermissionError,
     FileOperationResult.E_ACCESS_DENIED_SOURCE: PermissionError,
@@ -40,7 +40,7 @@ _hresult_to_exception = {
     FileOperationResult.E_ALREADY_EXISTS_READONLY: FileExistsError,
     FileOperationResult.E_ALREADY_EXISTS_SYSTEM: FileExistsError,
     FileOperationResult.E_USER_CANCELLED: UserCancelledError,
-    # NOTE: FileNoteound handled by parse_name
+    # NOTE: FileNotFound handled by parse_name
 }
 
 

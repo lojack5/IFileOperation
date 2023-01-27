@@ -2,6 +2,8 @@ __all__ = [
     'IFileOperationError',
     'FileOperatorError',
     'UserCancelledError',
+    # Backwards compatible exceptions:
+    'IFO_NotADirectoryError',
 ]
 
 import struct
@@ -31,3 +33,12 @@ class FileOperatorError(IFileOperationError):
 class UserCancelledError(IFileOperationError):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__('User cancelled the operation')
+
+
+# Backward Campatible exceptions: remove these in the next major version (2.0)
+# These are for backwards campatibility when replacing specific HRESULT
+# based exceptions with standard library exceptions
+class IFO_NotADirectoryError(FileOperatorError, NotADirectoryError):
+    """FileOperatorError with HRESULT E_DRIVE_NOT_FOUND"""
+
+    pass
