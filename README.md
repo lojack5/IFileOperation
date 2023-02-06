@@ -6,7 +6,7 @@
 
 # IFileOperation- a simple wrapper to use Windows shell file operations.
 This is a very small wrapper around IFileOperation to expose methods to perform file opereration (
-move, copy, rename, new, delete) on files using Windows shell operations.  This means these
+move, copy, rename, delete) on files using Windows shell operations.  This means these
 operations can be undone, files can be recycled, and you can allow users to handle name conflicts:
 just like when you do any of these through Windows Explorer.
 
@@ -14,7 +14,6 @@ At the moment this is a very young and so only exposes the file operations:
 - Move
 - Copy
 - Rename
-- New
 - Delete
 
 More features may be added in the future, feel free to open a feature request for something
@@ -182,3 +181,7 @@ request and you'll get feedback!
 
 If you're not into coding, you can open a [Bug Report or Feature Request](https://github.com/lojack5/IFileOperation/issues)
 and I'll look into it.
+
+
+## Known Issues:
+1. Incompatible with WINE: see: https://github.com/lojack5/IFileOperation/issues/9

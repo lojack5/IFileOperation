@@ -304,3 +304,6 @@ class FileOperationResult(IntEnum):
 
     E_DRIVE_NOT_FOUND = 0x8027000F  # COPYENGINE_E_DEST_IS_RO_CD
     """The destination is a read-only CD, or the drive was not found."""
+
+    E_NOT_IMPLEMENTED = 0x80004001
+    """The method is not implemented."""

@@ -1,5 +1,5 @@
 __author__ = 'lojack5'
-__version__ = '1.2.0'
+__version__ = '1.2.1'
 
 
 from .errors import *

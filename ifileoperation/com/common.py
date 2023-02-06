@@ -11,7 +11,12 @@ from typing import Callable, ParamSpec, TypeVar
 import pythoncom
 from comtypes import COMObject, IUnknown
 
-from ..errors import FileOperatorError, IFO_NotADirectoryError, UserCancelledError
+from ..errors import (
+    FileOperatorError,
+    IFO_NotADirectoryError,
+    InterfaceNotImplementedError,
+    UserCancelledError,
+)
 from ..flags import FileOperationResult
 
 PIUnknown = POINTER(IUnknown)  # type: ignore
@@ -40,6 +45,7 @@ _hresult_to_exception = {
     FileOperationResult.E_ALREADY_EXISTS_READONLY: FileExistsError,
     FileOperationResult.E_ALREADY_EXISTS_SYSTEM: FileExistsError,
     FileOperationResult.E_USER_CANCELLED: UserCancelledError,
+    FileOperationResult.E_NOT_IMPLEMENTED: InterfaceNotImplementedError,
     # NOTE: FileNotFound handled by parse_name
 }
 

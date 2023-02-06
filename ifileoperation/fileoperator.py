@@ -69,9 +69,6 @@ class ProgressSink(FileOperationProgressSink):
         new_name: str | None,
         result: int,
     ) -> None:
-        import struct
-
-        result = struct.unpack('I', struct.pack('i', result))[0]
         if new_name:
             self.name_map[source] = new_name
 
@@ -113,6 +110,7 @@ class FileOperator:
     prompt if necessary.  If errors occur, the operation will fail immediately.
     """
 
+    @convert_exceptions
     def __init__(
         self,
         parent=None,

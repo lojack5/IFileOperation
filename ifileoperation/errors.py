@@ -2,6 +2,7 @@ __all__ = [
     'IFileOperationError',
     'FileOperatorError',
     'UserCancelledError',
+    'InterfaceNotImplementedError',
     # Backwards compatible exceptions:
     'IFO_NotADirectoryError',
 ]
@@ -16,6 +17,14 @@ def int32_to_uint32(value: int) -> int:
 
 class IFileOperationError(Exception):
     pass
+
+
+class InterfaceNotImplementedError(IFileOperationError):
+    def __init__(self) -> None:
+        super().__init__(
+            'COM interface method not implemented.  This is likely a WINE bug, see: '
+            'https://bugs.winehq.org/show_bug.cgi?id=50064.'
+        )
 
 
 class FileOperatorError(IFileOperationError):
@@ -40,5 +49,3 @@ class UserCancelledError(IFileOperationError):
 # based exceptions with standard library exceptions
 class IFO_NotADirectoryError(FileOperatorError, NotADirectoryError):
     """FileOperatorError with HRESULT E_DRIVE_NOT_FOUND"""
-
-    pass
