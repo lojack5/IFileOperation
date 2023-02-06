@@ -48,6 +48,7 @@ def convert_exceptions(callable: Callable[P, T]) -> Callable[P, T]:
     """Wraps a method to automatically convert pythoncom.com_error exceptions
     into FileOperatorError exceptions.
     """
+
     # TODO: Implement mapping to builtin Python exceptions for common
     # HRESULTs, e.g. E_ACCESSDENIED, E_OUTOFMEMORY, etc.
     @wraps(callable)
