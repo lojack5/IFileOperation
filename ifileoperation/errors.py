@@ -20,7 +20,7 @@ class IFileOperationError(Exception):
 
 
 class InterfaceNotImplementedError(IFileOperationError):
-    def __init__(self) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(
             'COM interface method not implemented.  This is likely a WINE bug, see: '
             'https://bugs.winehq.org/show_bug.cgi?id=50064.'
@@ -28,7 +28,15 @@ class InterfaceNotImplementedError(IFileOperationError):
 
 
 class FileOperatorError(IFileOperationError):
-    def __init__(self, hresult: int, msg: str, excepinfo=None, argerror=None) -> None:
+    def __init__(
+        self,
+        hresult: int = 0,
+        msg: str = '',
+        excepinfo=None,
+        argerror=None,
+        *args,
+        **kwargs,
+    ) -> None:
         if hresult < 0:
             hresult = int32_to_uint32(hresult)
         self.hresult = hresult
