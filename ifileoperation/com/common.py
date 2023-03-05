@@ -15,6 +15,7 @@ from ..errors import (
     FileOperatorError,
     IFO_NotADirectoryError,
     InterfaceNotImplementedError,
+    UnexpectedError,
     UserCancelledError,
 )
 from ..flags import FileOperationResult
@@ -46,6 +47,7 @@ _hresult_to_exception = {
     FileOperationResult.E_ALREADY_EXISTS_SYSTEM: FileExistsError,
     FileOperationResult.E_USER_CANCELLED: UserCancelledError,
     FileOperationResult.E_NOT_IMPLEMENTED: InterfaceNotImplementedError,
+    FileOperationResult.E_UNEXPECTED: UnexpectedError,
     # NOTE: FileNotFound handled by parse_name
 }
 

@@ -307,3 +307,6 @@ class FileOperationResult(IntEnum):
 
     E_NOT_IMPLEMENTED = 0x80004001
     """The method is not implemented."""
+
+    E_UNEXPECTED = 0x8000FFFF
+    """An unexpected error occurred."""

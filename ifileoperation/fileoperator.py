@@ -12,7 +12,7 @@ from .com import (
     convert_exceptions,
     parse_filename,
 )
-from .errors import IFileOperationError
+from .errors import IFileOperationError, UnexpectedError
 from .flags import FileOperationFlags, FileOperationResult, TransferSourceFlags
 
 StrPath: TypeAlias = str | PathLike[str]
@@ -144,6 +144,7 @@ class FileOperator:
             self.ifo.SetOperationFlags(int(flags))
         self.commit_on_exit = commit_on_exit
         self.entered = False
+        self._operations_queued = False
 
     def __enter__(self):
         if self.entered:
@@ -174,6 +175,7 @@ class FileOperator:
         self.ifo.MoveItem(
             parse_filename(source), parse_filename(destination, True), new_name
         )
+        self._operations_queued = True
 
     @convert_exceptions
     def move_files(self, sources: Iterable[StrPath], destination: StrPath) -> None:
@@ -185,6 +187,7 @@ class FileOperator:
         """
         srcs = [parse_filename(s) for s in sources]
         self.ifo.MoveItems(srcs, parse_filename(destination, True))
+        self._operations_queued = True
 
     @convert_exceptions
     def rename_file(
@@ -214,6 +217,7 @@ class FileOperator:
                 # rename is fine
                 new_name = dest_path.name
         self.ifo.RenameItem(parse_filename(source), new_name)
+        self._operations_queued = True
 
     @convert_exceptions
     def rename_files(self, sources: Iterable[StrPath], new_name: StrPath) -> None:
@@ -225,6 +229,7 @@ class FileOperator:
         """
         srcs = [parse_filename(s) for s in sources]
         self.ifo.RenameItems(srcs, fspath(new_name))
+        self._operations_queued = True
 
     @convert_exceptions
     def copy_file(
@@ -240,6 +245,7 @@ class FileOperator:
         self.ifo.CopyItem(
             parse_filename(source), parse_filename(destination, True), new_name
         )
+        self._operations_queued = True
 
     @convert_exceptions
     def copy_files(self, sources: Iterable[StrPath], destination: StrPath) -> None:
@@ -250,6 +256,7 @@ class FileOperator:
         """
         srcs = [parse_filename(s) for s in sources]
         self.ifo.CopyItems(srcs, parse_filename(destination, True))
+        self._operations_queued = True
 
     @convert_exceptions
     def delete_file(self, source: StrPath) -> None:
@@ -258,6 +265,7 @@ class FileOperator:
         :param source: The file to be deleted.
         """
         self.ifo.DeleteItem(parse_filename(source))
+        self._operations_queued = True
 
     @convert_exceptions
     def delete_files(self, sources: Iterable[StrPath]) -> None:
@@ -267,12 +275,26 @@ class FileOperator:
         """
         srcs = [parse_filename(s) for s in sources]
         self.ifo.DeleteItems(srcs)
+        self._operations_queued = True
 
     @convert_exceptions
+    def _perform_operations(self):
+        self.return_code = self.ifo.PerformOperations()
+
     def commit(self):
         """Perform all scheduled file operations."""
-        self.return_code = self.ifo.PerformOperations()
-        self.aborted = self.ifo.GetAnyOperationsAborted()
-        self.results = self.sink.name_map
-        if self.return_code is None:
-            self.return_code = self.sink.result_code
+        try:
+            self._perform_operations()
+        except UnexpectedError:
+            if not self._operations_queued:
+                # Actually expected when no operations have been queued
+                self.return_code = 0
+                self.aborted = False
+                self.results = {}
+            else:
+                raise
+        else:
+            self.aborted = self.ifo.GetAnyOperationsAborted()
+            self.results = self.sink.name_map
+            if self.return_code is None:
+                self.return_code = self.sink.result_code
