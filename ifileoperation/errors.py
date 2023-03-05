@@ -52,6 +52,11 @@ class UserCancelledError(IFileOperationError):
         super().__init__('User cancelled the operation')
 
 
+class UnexpectedError(IFileOperationError):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(f'An unexpected error occurred: {args}, {kwargs}')
+
+
 # Backward Campatible exceptions: remove these in the next major version (2.0)
 # These are for backwards campatibility when replacing specific HRESULT
 # based exceptions with standard library exceptions
