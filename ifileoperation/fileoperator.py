@@ -160,10 +160,10 @@ class FileOperator:
 
     @convert_exceptions
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        pythoncom.CoUninitialize()
         if self.commit_on_exit and not exc_type:
             self.commit()
             self.ifo.Unadvise(self.sink_cookie)
+        pythoncom.CoUninitialize()
         # Delete the IFileOperation instance, so reentrance will raise an error
         del self.ifo
         del self.sink
