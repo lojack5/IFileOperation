@@ -6,6 +6,8 @@ from os import PathLike, fspath
 from pathlib import Path
 from typing import Iterable, TypeAlias
 
+import pythoncom
+
 from .com import (
     FileOperation,
     FileOperationProgressSink,
@@ -110,7 +112,6 @@ class FileOperator:
     prompt if necessary.  If errors occur, the operation will fail immediately.
     """
 
-    @convert_exceptions
     def __init__(
         self,
         parent=None,
@@ -130,35 +131,44 @@ class FileOperator:
         :param commit_on_exit: If True (default: False), `commit` will be performed
             automatically when the with block is exited if no exceptions were raised.
         """
-        self.ifo = FileOperation()
-        self.sink = ProgressSink()
-        self.sink_cookie = self.ifo.Advise(self.sink.com_ptr)
+        self.entered = False
         if parent is not None:
             try:
                 parent = parent.GetHandle()  # wx.Window
             except AttributeError:
                 pass
-        if parent is not None:
-            self.ifo.SetOwnerWindow(parent)
-        if flags is not None:
-            self.ifo.SetOperationFlags(int(flags))
+        self._parent = parent
+        self._flags = flags
         self.commit_on_exit = commit_on_exit
-        self.entered = False
-        self._operations_queued = False
 
+    @convert_exceptions
     def __enter__(self):
         if self.entered:
             raise IFileOperationError(f'{type(self).__name__} is not reentrant')
         else:
             self.entered = True
+            pythoncom.CoInitializeEx(pythoncom.COINIT_APARTMENTTHREADED)
+            self.ifo = FileOperation()
+            self.sink = ProgressSink()
+            self.sink_cookie = self.ifo.Advise(self.sink.com_ptr)
+            if self._parent is not None:
+                self.ifo.SetOwnerWindow(self._parent)
+            if self._flags is not None:
+                self.ifo.SetOperationFlags(int(self._flags))
+            self._operations_queued = False
             return self
 
+    @convert_exceptions
     def __exit__(self, exc_type, exc_value, exc_traceback):
+        pythoncom.CoUninitialize()
         if self.commit_on_exit and not exc_type:
             self.commit()
             self.ifo.Unadvise(self.sink_cookie)
         # Delete the IFileOperation instance, so reentrance will raise an error
         del self.ifo
+        del self.sink
+        del self.sink_cookie
+        self.entered = False
 
     @convert_exceptions
     def move_file(
