@@ -47,7 +47,7 @@ def create_bind_ctx(find_data: WIN32_FIND_DATAW):
 FOLDER_BIND_CTX = create_bind_ctx(WIN32_FIND_DATAW(DWORD(FileAttributeFlags.DIRECTORY)))
 
 
-E_FILE_NOT_FOUND = -2147024894
+E_FILE_NOT_FOUND = (-2147024894, -2147024893)
 
 
 def parse_filename(path: StrPath, force: bool = False):
@@ -60,7 +60,7 @@ def parse_filename(path: StrPath, force: bool = False):
             path, None, shell.IID_IShellItem2  # type: ignore
         )
     except pywintypes.com_error as e:
-        if e.hresult == E_FILE_NOT_FOUND:  # type: ignore
+        if e.hresult in E_FILE_NOT_FOUND:  # type: ignore
             if force:
                 return shell.SHCreateItemFromParsingName(
                     path, FOLDER_BIND_CTX, shell.IID_IShellItem2
