@@ -1,10 +1,12 @@
 __all__ = [
     'FOLDER_BIND_CTX',
-    'parse_filename',
+    'filename_to_IShellItem',
+    'filenames_to_IShellItemArray',
 ]
+import os
+from collections.abc import Iterable
 from ctypes import byref
 from ctypes.wintypes import DWORD, WIN32_FIND_DATAW
-from os import PathLike, fspath
 from typing import TypeAlias
 
 import pythoncom
@@ -17,7 +19,7 @@ from ..flags import FileAttributeFlags
 from .common import com_ptr
 from .interfaces import IFileSysBindData
 
-StrPath: TypeAlias = str | PathLike[str]
+StrPath: TypeAlias = str | os.PathLike[str]
 
 
 class FileSysBindData(COMObject):
@@ -50,22 +52,35 @@ FOLDER_BIND_CTX = create_bind_ctx(WIN32_FIND_DATAW(DWORD(FileAttributeFlags.DIRE
 E_FILE_NOT_FOUND = (-2147024894, -2147024893)
 
 
-def parse_filename(path: StrPath, force: bool = False):
-    """Parse a filename into an IShellItem2 instance. If `force` is True, then
-    an IShellItem2 instance will be returned even if the file does not exist.
+def filename_to_IShellItem(path: StrPath, force: bool = False):
+    """Parse a filename into an IShellItem instance. If `force` is True, then an
+    IShellItem instance will be returned even if the file does not exist.
     """
-    path = fspath(path)
+    path = os.path.abspath(os.fspath(path))
+    ctx = FOLDER_BIND_CTX if force else None
     try:
         return shell.SHCreateItemFromParsingName(
-            path, None, shell.IID_IShellItem2  # type: ignore
+            path, ctx, shell.IID_IShellItem  # type: ignore
         )
     except pywintypes.com_error as e:
         if e.hresult in E_FILE_NOT_FOUND:  # type: ignore
-            if force:
-                return shell.SHCreateItemFromParsingName(
-                    path, FOLDER_BIND_CTX, shell.IID_IShellItem2
-                )
-            else:
+            raise FileNotFoundError(path) from None
+        raise
+
+
+def filenames_to_IShellItemArray(paths: Iterable[StrPath]):
+    """Parse an iterable (list, etc) of filenames into an IShellItemArray, for use with
+    the plural forms of IFileOperation methods. If not filenames are passed, None is
+    returned (and indicates the operation would fail).
+    """
+    idls = []
+    for path in paths:
+        path = os.path.abspath(os.fspath(path))
+        try:
+            idl = shell.SHParseDisplayName(path, 0, None)[0]
+        except pywintypes.com_error as e:
+            if e.hresult in E_FILE_NOT_FOUND:  # type: ignore
                 raise FileNotFoundError(path) from None
-        else:
             raise
+        idls.append(idl)
+    return None if not idls else shell.SHCreateShellItemArrayFromIDLists(idls)

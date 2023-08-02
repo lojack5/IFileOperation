@@ -12,7 +12,8 @@ from .com import (
     FileOperation,
     FileOperationProgressSink,
     convert_exceptions,
-    parse_filename,
+    filename_to_IShellItem,
+    filenames_to_IShellItemArray,
 )
 from .errors import IFileOperationError, UnexpectedError
 from .flags import FileOperationFlags, FileOperationResult, TransferSourceFlags
@@ -112,6 +113,8 @@ class FileOperator:
     prompt if necessary.  If errors occur, the operation will fail immediately.
     """
 
+    results: dict[str, str]
+
     def __init__(
         self,
         parent=None,
@@ -140,6 +143,7 @@ class FileOperator:
         self._parent = parent
         self._flags = flags
         self.commit_on_exit = commit_on_exit
+        self.results = {}
 
     @convert_exceptions
     def __enter__(self):
@@ -183,7 +187,9 @@ class FileOperator:
         :param new_name: The new name for the file if desired.
         """
         self.ifo.MoveItem(
-            parse_filename(source), parse_filename(destination, True), new_name
+            filename_to_IShellItem(source),
+            filename_to_IShellItem(destination, True),
+            new_name,
         )
         self._operations_queued = True
 
@@ -195,8 +201,10 @@ class FileOperator:
         :param sources: And iterable of filenames to be moved.
         :param destination: The destination *directory* to move to.
         """
-        srcs = [parse_filename(s) for s in sources]
-        self.ifo.MoveItems(srcs, parse_filename(destination, True))
+        srcs = filenames_to_IShellItemArray(sources)
+        if not srcs:
+            return
+        self.ifo.MoveItems(srcs, filename_to_IShellItem(destination, True))
         self._operations_queued = True
 
     @convert_exceptions
@@ -226,7 +234,7 @@ class FileOperator:
                 # new_name includes the directory, but it's the same directory, so a
                 # rename is fine
                 new_name = dest_path.name
-        self.ifo.RenameItem(parse_filename(source), new_name)
+        self.ifo.RenameItem(filename_to_IShellItem(source), new_name)
         self._operations_queued = True
 
     @convert_exceptions
@@ -237,7 +245,9 @@ class FileOperator:
         :param sources: An iterable of filenames to be renamed.
         :param new_name: The new name of the files.
         """
-        srcs = [parse_filename(s) for s in sources]
+        srcs = filenames_to_IShellItemArray(sources)
+        if not srcs:
+            return
         self.ifo.RenameItems(srcs, fspath(new_name))
         self._operations_queued = True
 
@@ -253,7 +263,9 @@ class FileOperator:
         :param new_name: Optional new name of the file.
         """
         self.ifo.CopyItem(
-            parse_filename(source), parse_filename(destination, True), new_name
+            filename_to_IShellItem(source),
+            filename_to_IShellItem(destination, True),
+            new_name,
         )
         self._operations_queued = True
 
@@ -264,8 +276,10 @@ class FileOperator:
         :param sources: An iterable of filenames to be copied.
         :param destination: The destination *directory* to copy to.
         """
-        srcs = [parse_filename(s) for s in sources]
-        self.ifo.CopyItems(srcs, parse_filename(destination, True))
+        srcs = filenames_to_IShellItemArray(sources)
+        if not srcs:
+            return
+        self.ifo.CopyItems(srcs, filename_to_IShellItem(destination, True))
         self._operations_queued = True
 
     @convert_exceptions
@@ -274,7 +288,7 @@ class FileOperator:
 
         :param source: The file to be deleted.
         """
-        self.ifo.DeleteItem(parse_filename(source))
+        self.ifo.DeleteItem(filename_to_IShellItem(source))
         self._operations_queued = True
 
     @convert_exceptions
@@ -283,7 +297,9 @@ class FileOperator:
 
         :param sources: An iterable of filenames to be deleted.
         """
-        srcs = [parse_filename(s) for s in sources]
+        srcs = filenames_to_IShellItemArray(sources)
+        if not srcs:
+            return
         self.ifo.DeleteItems(srcs)
         self._operations_queued = True
 
