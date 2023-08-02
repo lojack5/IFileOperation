@@ -130,7 +130,9 @@ The basic file operations can be scheduled.  In these method signatures,
   automatically be transformed into a `move_file` operation instead.
 - `rename_files(sources: Iterable[StrPath], new_name: str)`:  Renames the given
   files to have the new name.  Unlike `rename_file`, you cannot rename files
-  into files in different directories.
+  into files in different directories. If multiple source files are in the same
+  directory, you probably want to include `FileOperationFlags.RENAMEONCOLLISION` to
+  prevent errors while renaming.
 - `delete_file(source: StrPath)`: Deletes the target file.
 - `delete_files(sources: Iterable[StrPath])`: Deletes the target files.
 - `commit()`: Cause all the queue operations to be performed.
